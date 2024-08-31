@@ -1,9 +1,7 @@
 ---
 title: "Problem Set 1"
 author: "Yifan Li"
-output:
-  pdf_document:
-    wrap: true
+format: pdf
 editor: visual
 ---
 
@@ -11,10 +9,25 @@ editor: visual
 
 # a
 
-Using `read.table` to read a file written in txt format. For the separation, using ','. Then according to the description file, 'wine.names', there are 14 attributes in the data file with a class number listed in the first column. So i add `col.names` in the code `read.table`. Such that, I can produce a `data.frame` object with appropriate columns names.
+Using `read.table` to read a file written in txt format. For the separation, using ','. Then according to the description file, 'wine.names', there are 14 attributes in the data file with a class number listed in the first column. So adding `col.names` in the code `read.table`. Such that, one can produce a `data.frame` object with appropriate columns names.
 
 ```{r}
-wines_data <- read.table("wine.data", sep = ",", col.names=c('class_number', 'Alcohol', 'Malic_acid', 'Ash', 'Alcalinity_of_ash', 'Magnesium', 'Total_phenols', 'Flavanoids', 'Nonflavanoid_phenols', 'Proanthocyanins', 'Color_intensity', 'Hue', 'OD280_OD315_of_diluted_wines', 'Proline'))
+wines_data <- read.table("wine.data",
+                         sep = ",",
+                         col.names=c('class_number',
+                                     'Alcohol',
+                                     'Malic_acid',
+                                     'Ash',
+                                     'Alcalinity_of_ash',
+                                     'Magnesium',
+                                     'Total_phenols',
+                                     'Flavanoids',
+                                     'Nonflavanoid_phenols',
+                                     'Proanthocyanins',
+                                     'Color_intensity',
+                                     'Hue',
+                                     'OD280_OD315_of_diluted_wines',
+                                     'Proline'))
 ```
 
 # b
@@ -103,30 +116,71 @@ percentage
 average_table <- data.frame(id = 1: 4,
                             class_number = c('overall', '1', '2', '3'),
                             
-                            Mean_Alcohol = c(mean(wines_data$Alcohol), mean(class_one$Alcohol), mean(class_two$Alcohol), mean(class_three$Alcohol)),
+                            Mean_Alcohol = c(mean(wines_data$Alcohol), 
+                                             mean(class_one$Alcohol), 
+                                             mean(class_two$Alcohol), 
+                                             mean(class_three$Alcohol)),
                             
-                            Mean_Malic_acid = c(mean(wines_data$Malic_acid), mean(class_one$Malic_acid), mean(class_two$Malic_acid), mean(class_three$Malic_acid)),
+                            Mean_Malic_acid = c(mean(wines_data$Malic_acid),
+                                                mean(class_one$Malic_acid), 
+                                                mean(class_two$Malic_acid),
+                                                mean(class_three$Malic_acid)),
                             
-                            Mean_Ash = c(mean(wines_data$Ash), mean(class_one$Ash), mean(class_two$Ash), mean(class_three$Ash)),
+                            Mean_Ash = c(mean(wines_data$Ash),
+                                         mean(class_one$Ash),
+                                         mean(class_two$Ash),
+                                         mean(class_three$Ash)),
                             
-                            Mean_Alcalinity_of_ash = c(mean(wines_data$Alcalinity_of_ash), mean(class_one$Alcalinity_of_ash), mean(class_two$Alcalinity_of_ash), mean(class_three$Alcalinity_of_ash)),
+                            Mean_Alcalinity_of_ash = c(
+                              mean(wines_data$Alcalinity_of_ash),
+                              mean(class_one$Alcalinity_of_ash),
+                              mean(class_two$Alcalinity_of_ash),
+                              mean(class_three$Alcalinity_of_ash)),
                             
-                            Mean_Magnesium = c(mean(wines_data$Magnesium), mean(class_one$Magnesium), mean(class_two$Magnesium), mean(class_three$Magnesium)),
+                            Mean_Magnesium = c(mean(wines_data$Magnesium),
+                                               mean(class_one$Magnesium),
+                                               mean(class_two$Magnesium),
+                                               mean(class_three$Magnesium)),
                             
-                            Mean_Total_phenols = c(mean(wines_data$Total_phenols), mean(class_one$Total_phenols), mean(class_two$Total_phenols), mean(class_three$Total_phenols)),
+                            Mean_Total_phenols = c(mean(wines_data$Total_phenols),
+                                                   mean(class_one$Total_phenols),
+                                                   mean(class_two$Total_phenols),
+                                                   mean(class_three$Total_phenols)),
                             
-                            Mean_Flavanoids = c(mean(wines_data$Flavanoids), mean(class_one$Flavanoids), mean(class_two$Flavanoids), mean(class_three$Flavanoids)),
+                            Mean_Flavanoids = c(mean(wines_data$Flavanoids),
+                                                mean(class_one$Flavanoids),
+                                                mean(class_two$Flavanoids),
+                                                mean(class_three$Flavanoids)),
                             
-                            Mean_Nonflavanoid_phenols = c(mean(wines_data$Nonflavanoid_phenols), mean(class_one$Nonflavanoid_phenols), mean(class_two$Nonflavanoid_phenols), mean(class_three$Nonflavanoid_phenols)),
+                            Mean_Nonflavanoid_phenols = c(
+                              mean(wines_data$Nonflavanoid_phenols),
+                              mean(class_one$Nonflavanoid_phenols),
+                              mean(class_two$Nonflavanoid_phenols),
+                              mean(class_three$Nonflavanoid_phenols)),
                             
-                            Mean_Proanthocyanins = c(mean(wines_data$Proanthocyanins), mean(class_one$Proanthocyanins), mean(class_two$Proanthocyanins), mean(class_three$Proanthocyanins)),
+                            Mean_Proanthocyanins = c(mean(wines_data$Proanthocyanins),
+                                                     mean(class_one$Proanthocyanins),
+                                                     mean(class_two$Proanthocyanins),
+                                                     mean(class_three$Proanthocyanins)),
                             
-                            Mean_Color_intensity = c(mean(wines_data$Color_intensity), mean(class_one$Color_intensity), mean(class_two$Color_intensity), mean(class_three$Color_intensity)),
+                            Mean_Color_intensity = c(mean(wines_data$Color_intensity),
+                                                     mean(class_one$Color_intensity),
+                                                     mean(class_two$Color_intensity),
+                                                     mean(class_three$Color_intensity)),
                             
-                            Mean_Hue = c(mean(wines_data$Hue), mean(class_one$Hue), mean(class_two$Hue), mean(class_three$Hue)),
-                            Mean_OD280_OD315_of_diluted_wines = c(mean(wines_data$OD280_OD315_of_diluted_wines), mean(class_one$OD280_OD315_of_diluted_wines), mean(class_two$OD280_OD315_of_diluted_wines), mean(class_three$OD280_OD315_of_diluted_wines)),
+                            Mean_Hue = c(mean(wines_data$Hue), mean(class_one$Hue),
+                                         mean(class_two$Hue), mean(class_three$Hue)),
                             
-                            Mean_Proline = c(mean(wines_data$Proline), mean(class_one$Proline), mean(class_two$Proline), mean(class_three$Proline)))
+                            Mean_OD280_OD315_of_diluted_wines = c(
+                                mean(wines_data$OD280_OD315_of_diluted_wines),
+                                mean(class_one$OD280_OD315_of_diluted_wines),
+                                mean(class_two$OD280_OD315_of_diluted_wines),
+                                mean(class_three$OD280_OD315_of_diluted_wines)),
+                            
+                            Mean_Proline = c(mean(wines_data$Proline),
+                                             mean(class_one$Proline),
+                                             mean(class_two$Proline),
+                                             mean(class_three$Proline)))
 average_table
 ```
 
@@ -179,13 +233,16 @@ For different comparisons, assuming that the variances are different, first comp
 Since the null hypothesis is that there is no difference between each class, $\mu_1-\mu_2=0$, thus the t-statistics are:
 
 ```{r}
-t_1_2 <- (mean_one - mean_two) / (sqrt((variance_one / num_class_one) + variance_two / num_class_two))
+t_1_2 <- (mean_one - mean_two) / 
+  (sqrt((variance_one / num_class_one) + variance_two / num_class_two))
 t_1_2 
 
-t_1_3 <- (mean_one - mean_three) / (sqrt((variance_one / num_class_one) + variance_three / num_class_three))
+t_1_3 <- (mean_one - mean_three) / 
+  (sqrt((variance_one / num_class_one) + variance_three / num_class_three))
 t_1_3
 
-t_2_3 <- (mean_two - mean_three) / (sqrt((variance_two / num_class_two) + variance_three / num_class_three))
+t_2_3 <- (mean_two - mean_three) / 
+  (sqrt((variance_two / num_class_two) + variance_three / num_class_three))
 t_2_3
 ```
 
@@ -193,17 +250,23 @@ Next the degrees of freedom are defined as $\nu=\frac{\left(\frac{S_1^2}{n_1} + 
 
 ```{r}
 nu_1_2 <- floor(
-  (variance_one / num_class_one + variance_two / num_class_two)^2 / ((variance_one / num_class_one)^2 / (num_class_one - 1) + (variance_two / num_class_two)^2 / (num_class_two - 1))
+  (variance_one / num_class_one + variance_two / num_class_two)^2 / 
+    ((variance_one / num_class_one)^2 / (num_class_one - 1) + 
+       (variance_two / num_class_two)^2 / (num_class_two - 1))
   )
 nu_1_2
 
 nu_1_3 <- floor(
-  (variance_one / num_class_one + variance_three / num_class_three)^2 / ((variance_one / num_class_one)^2 / (num_class_one - 1) + (variance_three / num_class_three)^2 / (num_class_three - 1))
+  (variance_one / num_class_one + variance_three / num_class_three)^2 / 
+    ((variance_one / num_class_one)^2 / (num_class_one - 1) + 
+       (variance_three / num_class_three)^2 / (num_class_three - 1))
   )
 nu_1_3
 
 nu_2_3 <- floor(
-  (variance_two / num_class_two + variance_three / num_class_three)^2 / ((variance_two / num_class_two)^2 / (num_class_two - 1) + (variance_three / num_class_three)^2 / (num_class_three - 1))
+  (variance_two / num_class_two + variance_three / num_class_three)^2 / 
+    ((variance_two / num_class_two)^2 / (num_class_two - 1) + 
+       (variance_three / num_class_three)^2 / (num_class_three - 1))
   )
 nu_2_3
 ```
