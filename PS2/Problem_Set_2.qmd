@@ -1,0 +1,307 @@
+---
+title: "Problem_Saet_2"
+author: "Yifan Li"
+format: pdf
+editor: visual
+---
+
+# Link to the GitHub
+
+  The link to myh GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS2>.
+
+# Problem 1
+
+## a.
+
+  Version one:
+  
+```{r}
+#' Using for loop to implement the game 
+#'
+#' @param n number of dice to roll
+#' @return win total winnings
+play_dice_v1 <- function(n){
+  win <- -2 * n # cost 2 to play a roll
+  roll_results <- sample(1: 6, n, replace=TRUE)
+  for (single in roll_results){
+    if (single == 3 | single == 5){
+      win <- win + 2 * single
+    }
+  }
+  return(win)
+}
+
+play_dice_v1(10)
+```
+
+  Version two:
+  
+```{r}
+#' Using built-in R vectorized functions to implement the game 
+#'
+#' @param n number of dice to roll
+#' @return win total winnings
+play_dice_v2 <- function(n){
+  win <- -2 * n # cost 2 to play a roll
+  roll_results <- sample(1: 6, n, replace=TRUE)
+  win_index <- (roll_results == 3) | (roll_results == 5)
+  roll_results[win_index] <- 2 * roll_results[win_index]
+  roll_results[!win_index] <- 0
+  win <- win + sum(roll_results)
+  return(win)
+}
+
+play_dice_v2(10)
+```
+
+  Version three:
+
+```{r}
+#' Using table to implement the game 
+#'
+#' @param n number of dice to roll
+#' @return win total winnings
+play_dice_v3 <- function(n){
+  win <- -2 * n # cost 2 to play a roll
+  roll_results <- table(sample(1: 6, n, replace=TRUE))
+  winning <- 6 * ifelse(!is.na(roll_results['3']), roll_results['3'], 0) +
+    10 * ifelse(!is.na(roll_results['5']), roll_results['5'], 0)
+  win <- win + winning[[1]]
+  return(win)
+}
+
+play_dice_v3(10)
+```
+
+  Version four:
+
+```{r}
+#' Using lapply to implement the game 
+#'
+#' @param n number of dice to roll
+#' @return win total winnings
+play_dice_v4 <- function(n){
+  win <- -2 * n # cost 2 to play a roll
+  roll_results <- sample(1: 6, n, replace=TRUE)
+  #' Get winning point of given roll
+  #'
+  #' @param x one roll result
+  #' @return point the point gain from this rolling
+  get_points <- function(x){
+    point = 0
+    if (x == 3 | x == 5){
+      point = x * 2
+    }
+    return(point)
+  }
+  
+  winning <- sum(sapply(roll_results, get_points))
+  win <- win + winning
+  return(win)
+}
+
+play_dice_v4(10)
+```
+
+## b.
+
+  Test for version one:
+  
+```{r}
+play_dice_v1(3)
+play_dice_v1(3000)
+```
+
+  Test for version two:
+  
+```{r}
+play_dice_v2(3)
+play_dice_v2(3000)
+```
+
+  Test for version three:
+  
+```{r}
+play_dice_v3(3)
+play_dice_v3(3000)
+```
+
+  Test for version four:
+  
+```{r}
+play_dice_v4(3)
+play_dice_v4(3000)
+```
+
+## c.
+
+  To demonstrate the same result, one needs set the same seed before each sampling. For $3$:
+  
+```{r}
+set.seed(09152024)
+play_dice_v1(3)
+set.seed(09152024)
+play_dice_v2(3)
+set.seed(09152024)
+play_dice_v3(3)
+set.seed(09152024)
+play_dice_v4(3)
+```
+
+  For $3000$:
+  
+```{r}
+set.seed(09152024)
+play_dice_v1(3000)
+set.seed(09152024)
+play_dice_v2(3000)
+set.seed(09152024)
+play_dice_v3(3000)
+set.seed(09152024)
+play_dice_v4(3000)
+```
+
+## d.
+
+  For low input (1,000):
+
+```{r}
+library(microbenchmark)
+microbenchmark(v1=play_dice_v1(1000), v2=play_dice_v2(1000),
+               v3=play_dice_v3(1000), v4=play_dice_v4(1000))
+```
+
+  For large input (100,000):
+
+```{r}
+library(microbenchmark)
+microbenchmark(v1=play_dice_v1(100000), v2=play_dice_v2(100000),
+               v3=play_dice_v3(100000), v4=play_dice_v4(100000))
+```
+
+  From two experiments, one can find that among these four function, the implementation using built-in R vectorized functions is the fastest. Mean while, the function using `sapply` is the slowest.
+  
+## e.
+
+  This game is unfair, to defend the decision using a Monte Carlo simulation, the version two will be used.
+
+```{r}
+sum <- 0
+n <- 100000
+for (i in 1: n){
+  sum <- sum + play_dice_v2(1)
+}
+sample_mean <- sum / n
+sample_mean
+```
+
+  Since the sample mean is greater than zero, one can argue that this is not a fair game.
+  
+# Problem 2
+
+## a
+
+```{r}
+raw_data <- read.csv('cars.csv', header=TRUE, sep=',', 
+                     col.names=c('Height',
+                                 'Length',
+                                 'Width',
+                                 'Driveline',
+                                 'Type',
+                                 'Hybird',
+                                 'Gears',
+                                 'Transmission',
+                                 'City_mpg',
+                                 'Fuel_type',
+                                 'Highway_mpg',
+                                 'Classification',
+                                 'ID',
+                                 'Make',
+                                 'Model_year',
+                                 'Year',
+                                 'horsepower',
+                                 'Torque'))
+head(raw_data)
+```
+
+
+
+## b.
+
+```{r}
+gasoline_data <- raw_data[raw_data['Fuel_type'] == 'Gasoline', ]
+```
+
+## c.
+
+  The original data distribution is:
+```{r}
+highway_mpg <- gasoline_data['Highway_mpg']
+hist(highway_mpg[,], breaks = 200, probability = TRUE, xlim = c(0, 50))
+```
+
+  Since the data are all positive and the distribution has a right skew with a long tail, a log transformation would likely be the best choice. Then update the data in the data frame.
+  
+```{r}
+transformed_highway_mpg <- log10(highway_mpg)
+hist(transformed_highway_mpg[,], breaks = 20, probability = TRUE, xlim = c(1, 2.5))
+gasoline_data['Highway_mpg'] <- transformed_highway_mpg
+```
+
+## d.
+
+```{r}
+gasoline_data$Year <- as.factor(gasoline_data$Year)
+d_lm <- lm(Highway_mpg~Torque + horsepower
+           + Height + Length + Width
+           + Year, data=gasoline_data)
+summary(d_lm)
+```
+
+  From the coefficient of torque, which is $-9.964155\times10^{-4}$, meaning for each additional unit of torque, highway MPG will decrease by $-9.964155\times10^{-4}$ while holding other variables constant. The coefficient is significant with a p-value less than $2\times 10^{-16}$, indicating that the relationship is statistically significant.
+  
+## e.
+
+```{r}
+e_lm <- lm(Highway_mpg ~ horsepower * Torque +
+           + Height + Length + Width, data=gasoline_data)
+summary(e_lm)
+```
+
+  For the three different horsepower values, they will be the min, mean and the max value.
+  
+```{r}
+library(interactions)
+
+interact_plot(e_lm, pred=Torque, modx=horsepower, data=gasoline_data,
+              modx.values=c(min(gasoline_data$horsepower),
+                              mean(gasoline_data$horsepower), 
+                              max(gasoline_data$horsepower)), 
+              main.title="Interaction Between Torque and Horsepower on Highway MPG")
+
+
+```
+
+## f.
+
+```{r}
+design_matrix <-  model.matrix(Highway_mpg ~ Torque + horsepower
+           + Height + Length + Width
+           + Year, data=gasoline_data)
+
+Y <- gasoline_data$Highway_mpg
+
+design_matrix_t <- t(design_matrix)
+
+XTX_inv <- solve(design_matrix_t %*% design_matrix)
+
+XTY <- design_matrix_t %*% Y 
+
+beta_hat <- XTX_inv %*% XTY
+
+beta_hat
+manual_coef <- setNames(as.vector(beta_hat), names(d_lm$coefficients))
+all.equal(manual_coef, d_lm$coefficients)
+```
+
+  The result is True, which shows that the manual result is the same with the `lm` result.
