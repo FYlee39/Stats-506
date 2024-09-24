@@ -7,7 +7,7 @@ editor: visual
 
 # Link to the GitHub
 
-  The link to myh GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS2>.
+  The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS2>.
 
 # Problem 1
 
@@ -21,9 +21,11 @@ editor: visual
 #' @param n number of dice to roll
 #' @return win total winnings
 play_dice_v1 <- function(n){
-  win <- -2 * n # cost 2 to play a roll
+  # cost 2 to play a roll
+  win <- -2 * n 
   roll_results <- sample(1: 6, n, replace=TRUE)
   for (single in roll_results){
+    # if the dice shows 3 or 5, win the double points
     if (single == 3 | single == 5){
       win <- win + 2 * single
     }
@@ -42,10 +44,13 @@ play_dice_v1(10)
 #' @param n number of dice to roll
 #' @return win total winnings
 play_dice_v2 <- function(n){
-  win <- -2 * n # cost 2 to play a roll
+  # cost 2 to play a roll
+  win <- -2 * n 
   roll_results <- sample(1: 6, n, replace=TRUE)
+  # For 3 and 5, let the winning be the double of itself
   win_index <- (roll_results == 3) | (roll_results == 5)
   roll_results[win_index] <- 2 * roll_results[win_index]
+  # For other numbers, set them to be 0
   roll_results[!win_index] <- 0
   win <- win + sum(roll_results)
   return(win)
@@ -62,10 +67,15 @@ play_dice_v2(10)
 #' @param n number of dice to roll
 #' @return win total winnings
 play_dice_v3 <- function(n){
-  win <- -2 * n # cost 2 to play a roll
+  # cost 2 to play a roll
+  win <- -2 * n 
   roll_results <- table(sample(1: 6, n, replace=TRUE))
-  winning <- 6 * ifelse(!is.na(roll_results['3']), roll_results['3'], 0) +
-    10 * ifelse(!is.na(roll_results['5']), roll_results['5'], 0)
+  # number of 3 been rolled 
+  num_three <- ifelse(!is.na(roll_results['3']), roll_results['3'], 0)
+  # number of 5 been rolled 
+  num_five <- ifelse(!is.na(roll_results['5']), roll_results['5'], 0)
+  # total wining points
+  winning <- 3 * 2 * num_three + 5 * 2 * num_five
   win <- win + winning[[1]]
   return(win)
 }
@@ -81,15 +91,19 @@ play_dice_v3(10)
 #' @param n number of dice to roll
 #' @return win total winnings
 play_dice_v4 <- function(n){
-  win <- -2 * n # cost 2 to play a roll
+  # cost 2 to play a roll
+  win <- -2 * n 
   roll_results <- sample(1: 6, n, replace=TRUE)
+  
   #' Get winning point of given roll
   #'
   #' @param x one roll result
   #' @return point the point gain from this rolling
   get_points <- function(x){
     point = 0
+    # if the dice shows 3 or 5
     if (x == 3 | x == 5){
+      # double the number to be the winning points
       point = x * 2
     }
     return(point)
@@ -135,7 +149,7 @@ play_dice_v4(3000)
 
 ## c.
 
-  To demonstrate the same result, one needs set the same seed before each sampling. For $3$:
+  To demonstrate the same result, one needs set the same seed before each sampling. For $3$ times of experiments:
   
 ```{r}
 set.seed(09152024)
@@ -148,7 +162,7 @@ set.seed(09152024)
 play_dice_v4(3)
 ```
 
-  For $3000$:
+  For $3000$ times of experiments:
   
 ```{r}
 set.seed(09152024)
@@ -183,10 +197,11 @@ microbenchmark(v1=play_dice_v1(100000), v2=play_dice_v2(100000),
   
 ## e.
 
-  This game is unfair, to defend the decision using a Monte Carlo simulation, the version two will be used.
+  This game is unfair, to defend the decision using a Monte Carlo simulation, the version two will be used. There will be $100,000$ times of expeirments. Then the sample mean will be calculated, if the sample mean is no way near $0$, then one can argue that this game is unfair.
 
 ```{r}
 sum <- 0
+# Do 100,000 times of expeiments, find the sample mean
 n <- 100000
 for (i in 1: n){
   sum <- sum + play_dice_v2(1)
@@ -195,7 +210,7 @@ sample_mean <- sum / n
 sample_mean
 ```
 
-  Since the sample mean is greater than zero, one can argue that this is not a fair game.
+  Since the sample mean is much greater than zero, one can argue that this is not a fair game.
   
 # Problem 2
 
@@ -230,11 +245,13 @@ head(raw_data)
 
 ```{r}
 gasoline_data <- raw_data[raw_data['Fuel_type'] == 'Gasoline', ]
+head(gasoline_data)
 ```
 
 ## c.
 
   The original data distribution is:
+  
 ```{r}
 highway_mpg <- gasoline_data['Highway_mpg']
 hist(highway_mpg[,], breaks = 200, probability = TRUE, xlim = c(0, 50))
@@ -251,6 +268,7 @@ gasoline_data['Highway_mpg'] <- transformed_highway_mpg
 ## d.
 
 ```{r}
+# Make Year to be categorical variable
 gasoline_data$Year <- as.factor(gasoline_data$Year)
 d_lm <- lm(Highway_mpg~Torque + horsepower
            + Height + Length + Width
@@ -273,11 +291,13 @@ summary(e_lm)
 ```{r}
 library(interactions)
 
-interact_plot(e_lm, pred=Torque, modx=horsepower, data=gasoline_data,
-              modx.values=c(min(gasoline_data$horsepower),
+horsepower_range <- c(min(gasoline_data$horsepower),
                               mean(gasoline_data$horsepower), 
-                              max(gasoline_data$horsepower)), 
-              main.title="Interaction Between Torque and Horsepower on Highway MPG")
+                              max(gasoline_data$horsepower))
+
+interact_plot(e_lm, pred=Torque, modx=horsepower, data=gasoline_data,
+              modx.values=horsepower_range, 
+              main.title="Interaction Between Torque and Horsepower")
 
 
 ```
@@ -285,6 +305,7 @@ interact_plot(e_lm, pred=Torque, modx=horsepower, data=gasoline_data,
 ## f.
 
 ```{r}
+# create the design matrix
 design_matrix <-  model.matrix(Highway_mpg ~ Torque + horsepower
            + Height + Length + Width
            + Year, data=gasoline_data)
@@ -298,7 +319,7 @@ XTX_inv <- solve(design_matrix_t %*% design_matrix)
 XTY <- design_matrix_t %*% Y 
 
 beta_hat <- XTX_inv %*% XTY
-
+# Compare two values
 beta_hat
 manual_coef <- setNames(as.vector(beta_hat), names(d_lm$coefficients))
 all.equal(manual_coef, d_lm$coefficients)
