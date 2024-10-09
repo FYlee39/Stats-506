@@ -4,7 +4,10 @@ author: "Yifan Li"
 format: pdf
 editor: visual
 ---
+# Link to the GitHub
 
+  The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS3>.
+  
 # Problem 1
 
 ## a.
