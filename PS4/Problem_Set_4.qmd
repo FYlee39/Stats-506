@@ -1,0 +1,288 @@
+---
+title: "Problem Set 4"
+author: "Yifan Li"
+format: pdf
+editor: visual
+---
+
+# Link to the GitHub
+
+  The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS4>.
+
+# Problem 1
+
+```{r}
+library(nycflights13)
+library(dplyr)
+```
+
+## a.
+
+```{r}
+# read the flight data
+flight_data <- flights %>%
+  select(dep_delay, origin, dest, arr_delay)
+
+#
+# For departure data
+depature_data <- flight_data %>%
+  tibble %>% 
+  left_join(airports, by=c("origin" = "faa")) %>% # get the airports name
+  select(dep_delay, name) %>%
+  rename(delay=dep_delay,
+         airport_name=name)
+
+# data grouping and aggregate
+depature_data_mean_median <- depature_data %>%
+  filter(!is.na(delay)) %>% # remove the rows with NA 
+  group_by(airport_name) %>%
+  summarise(delay_mean=mean(delay, na.rm=TRUE),
+         delay_median=median(delay, na.rm=TRUE),
+         n = n()) %>% # get the number of flights
+  filter(n >= 10) %>% # filter to exclude any destination with under 10 flights
+  arrange(desc(delay_mean)) %>% # arrange in descending mean delay.
+  ungroup()
+
+# Print all rows
+print(depature_data_mean_median, n=Inf)
+
+#
+# For arrival data
+arrival_data <- flight_data %>%
+  tibble %>% 
+  left_join(airports, by=c("dest" = "faa")) %>% # get the airports name
+  select(arr_delay, name) %>%
+  rename(delay=arr_delay,
+         airport_name=name)
+
+# data grouping and aggregate
+arrival_data_mean_median <- arrival_data %>%
+  filter(!is.na(delay)) %>% # remove the rows with NA 
+  group_by(airport_name) %>%
+  summarise(delay_mean=mean(delay, na.rm=TRUE),
+         delay_median=median(delay, na.rm=TRUE),
+         n = n()) %>% # get the number of flights
+  filter(n >= 10) %>% # filter to exclude any destination with under 10 flights
+  arrange(desc(delay_mean)) %>% # arrange in descending mean delay.
+  ungroup()
+
+# Print all rows
+print(arrival_data_mean_median, n=Inf)
+```
+
+## b
+
+```{r}
+fastest_aircraft <- flights %>%
+  # Exclude rows with NA air_time or distance
+  filter(!is.na(air_time) & !is.na(distance)) %>% 
+  mutate(mph=distance / (air_time / 60)) %>% # Calculate speed in MPH
+  group_by(tailnum) %>%
+  summarise(
+    average_speed=mean(mph, na.rm=TRUE),
+    number_flights=n()
+  ) %>%
+  arrange(desc(average_speed)) %>%
+  slice(1) %>% # Select the row with the fastest average speed
+  left_join(planes, by="tailnum") %>% # get the aircraft model
+  select(model, average_speed, number_flights)
+
+print(fastest_aircraft)
+```
+
+# Problem 2
+
+Load the data.
+
+```{r}
+nnmaps <- read.csv("chicago-nmmaps.csv")
+```
+
+```{r}
+#' Function to compute the average temperature for a given month
+#'
+#' @param month Month, either a numeric 1-12 or a string.
+#' @param year a numeric year
+#' @param data The data set to obtain data from.
+#' @param celsius Logically indicating whether the results should be in celsius. 
+#' Default FALSE.
+#' @param average_fn A function with which to compute the mean. Default is mean.
+#'
+#' @return average_temperature average temperature for a given month
+get_temp <- function(month, year, data, celsius=FALSE, average_fn=mean){
+  # Sanitize the input
+  # month
+  month_short <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+                   "Oct", "Nov", "Dec")
+  month_full <- month.name
+  all_months <- c(month_full, month_short)
+  
+  if (is.character(month)){
+    month <- month %>%
+      tolower() %>%
+      match(tolower(all_months))
+    
+    if (is.na(month)){
+      # not a single match
+      message("Not a valiad month input")
+      return()
+    }
+    
+    if (month > 12){
+      month <- month - 12
+    }
+  }
+  
+  if (is.na(month) || !(month %in% 1:12)) {
+    message("Not a valiad month input")
+    return()
+  }
+  
+  given_month <- month
+  
+  # year
+  if (!is.numeric(year) || year < min(nnmaps$year) || year > max(nnmaps$year)){
+    message("Not a valiad year input")
+    return()
+  }
+  
+  given_year <- year
+  
+  # Filter the data for the given month and year
+  filtered_data <- data %>%
+    filter(month_numeric == given_month, year == given_year)
+  
+  if (nrow(filtered_data) == 0) {
+    message("No data available for the given month and year.")
+    return()
+  }
+  
+  # Calculate the average temperature using the provided average function
+  average_temperature <- filtered_data %>%
+    summarise(average_temperature = average_fn(temp)) %>%
+    pull(average_temperature)
+  
+  # Convert temperature to Celsius if requested
+  if (celsius) {
+    average_temperature <- (average_temperature - 32) * 5 / 9
+  }
+  
+  return(average_temperature)
+}
+```
+
+Test:
+
+```{r}
+get_temp("Apr", 1999, data = nnmaps)
+get_temp("Apr", 1999, data = nnmaps, celsius = TRUE)
+get_temp(10, 1998, data = nnmaps, average_fn = median)
+get_temp(13, 1998, data = nnmaps)
+get_temp(2, 2005, data = nnmaps)
+get_temp("November", 1999, data =nnmaps, celsius = TRUE,
+         average_fn = function(x) {
+           x %>% sort -> x
+           x[2:(length(x) - 1)] %>% mean %>% return
+         })
+```
+
+# Problem 3
+
+```{r}
+library(ggplot2)
+art_df <- read.csv("df_for_ml_improved_new_market.csv")
+```
+
+## a.
+
+```{r}
+a_art_df <- art_df %>% 
+  select(year,
+         price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+with(a_art_df, plot(mean_price_usd ~ year, col="lightgrey"))
+with(a_art_df, lines(mean_price_usd ~ year, col='red'))
+```
+
+As shown in the plot, there is some changes in the sales price in USD over time.
+
+## b.
+
+```{r}
+b_art_df <- art_df %>%
+  tidyr::gather(key="genre", value="is_genre", starts_with("Genre___")) %>%
+  filter(is_genre == 1) %>%
+  select(year, genre)
+
+# Create a stacked bar plot showing the distribution of genres over years
+ggplot(b_art_df, aes(x=factor(year), fill=genre)) +
+  geom_bar(position="fill") +
+  scale_fill_brewer(palette="Set3") +
+  labs(title="Distribution of Art Sales Genres Over Years",
+       x="Year",
+       y="Proportion of Sales",
+       fill="Genre") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+As shown in the plot, the distribution of five genres varies according to the year.
+
+## c.
+
+```{r}
+# Calculate the average sales price per genre per year
+c_art_df <- art_df %>%
+  tidyr::gather(key="genre", value="is_genre", starts_with("Genre___")) %>%
+  filter(is_genre == 1) %>%
+  select(year, genre, price_usd)
+
+photography_df <- c_art_df %>% 
+  filter(genre == "Genre___Photography") %>%
+  select(year, price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+painting_df <- c_art_df %>% 
+  filter(genre == "Genre___Painting") %>%
+  select(year, price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+other_df <- c_art_df %>% 
+  filter(genre == "Genre___Others") %>%
+  select(year, price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+sculpture_df <- c_art_df %>% 
+  filter(genre == "Genre___Sculpture") %>%
+  select(year, price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+print_df <- c_art_df %>% 
+  filter(genre == "Genre___Print") %>%
+  select(year, price_usd) %>%
+  group_by(year) %>%
+  summarise(mean_price_usd=mean(price_usd)) %>%
+  ungroup()
+
+with(photography_df, plot(mean_price_usd ~ year, type = "l",
+                          lwd=3, ylim = c(5000, 60000), col = "red"))
+lines(painting_df$mean_price_usd ~ painting_df$year, lwd=3, col = "green")
+lines(sculpture_df$mean_price_usd ~ sculpture_df$year, lwd=3, col = "blue")
+lines(print_df$mean_price_usd ~ print_df$year, lwd=3, col = "purple")
+lines(other_df$mean_price_usd ~ other_df$year, lwd=3, col = "black")
+legend("topleft", legend = c("photography", "painting", "sculpture", "print", "other"),
+       lty = c(1, 1, 1, 1, 1), lwd = c(3, 3, 3, 3, 3),
+       col = c("red", "green", "blue", "purple", "black"))
+```
+
+From the plot, one can argue that, the price of photography change more rapidly. The price of print is also changing very rapidly. While, for painting and other genres, their prices change in a similar way. The price of sculpture is smoother than other four genres. 
