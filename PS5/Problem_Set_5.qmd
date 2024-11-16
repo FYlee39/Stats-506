@@ -1,0 +1,473 @@
+---
+title: "Problem Set 5"
+author: "Yifan Li"
+format:
+  html:
+    self-contained: true
+editor: visual
+---
+
+# Line to GitHub
+
+The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS5>.
+
+# Problem 1
+
+```{r}
+library(Rcpp)
+# GCD
+cppFunction("
+int C_gcd(int x, int y) {
+ return  std::gcd(x, y);
+}")
+
+# LCM
+cppFunction("
+int C_lcm(int x, int y) {
+ return  std::lcm(x, y);
+}")
+```
+
+## a.
+
+```{r}
+# define the S4 class
+
+setClass("rational",
+         slots = c(nominator = "numeric",
+                   denominator = "numeric"))
+
+# define the constructor
+
+#' constructor function for class rational
+#'
+#' @param a a numeric vector for nominator
+#' @param b a numeric vector for denominator
+#' @return the rational object
+rational <- function(a, b) {
+  return(new("rational", nominator=a, denominator=b))
+}
+
+# define validator
+
+setValidity("rational", function(object){
+  # make sure the denominator is not 0
+  if (object@denominator == 0) {
+    stop("Error 0 is not a valid denominator")
+  }
+  return(TRUE)
+})
+
+# show method
+
+##' @title display a `rational` object
+##' @param object A `rational` object
+setMethod("show", "rational",
+  function(object) {
+    cat(object@nominator)
+    cat("/")
+    cat(object@denominator)
+    cat("\n")
+    return(invisible(object))
+  }
+)
+
+# simplify method
+
+setGeneric("simplify",
+           function(object) {
+             standardGeneric("simplify")
+           })
+
+##' @title return the simplest form of a `rational`
+##' @param object a `rational` object
+setMethod("simplify", "rational",
+          function(object) {
+            gcd <- C_gcd(object@nominator, object@denominator)
+            new_nominator <- object@nominator / gcd
+            new_denominator <- object@denominator / gcd
+            cat(new_nominator)
+            cat("/")
+            cat(new_denominator)
+            cat("\n")
+            return(invisible(object))
+          })
+
+# quotient method
+
+setGeneric("quotient",
+           function(object, ...) {
+             standardGeneric("quotient")
+           })
+
+##' @title return the quotient of a `rational`
+##' @param object a `rational` object
+##' @digits integer an integer for how many digits in printing
+setMethod("quotient", "rational",
+          function(object, digits=NULL, ...) {
+            value <- object@nominator / object@denominator
+              if (!is.null(digits)) {
+                if (!is.numeric(digits) || digits %% 1 != 0 || digits < 0) {
+                  stop("Error: 'digits' must be a non-negative integer.")}
+                  print(format(value, digits=digits))
+              } else {
+                print(value)
+              }
+            return(invisible(object))
+          })
+
+# addition method
+
+##' @title `rational` arithmetic.
+##'
+##' @param e1 A `rational`
+##' @param e2 A `rational`
+##' @return A `rational`
+setMethod("+", signature(e1="rational",
+                         e2="rational"),
+          function(e1, e2) {
+            lcm <- C_lcm(e1@denominator, e2@denominator)
+            e1_mul <- lcm / e1@denominator
+            e2_mul <- lcm / e2@denominator
+            new_nominator <- e1@nominator * e1_mul + e2@nominator * e2_mul
+            return(rational(a=new_nominator,
+                            b=lcm))
+          })
+
+# subtraction method
+
+##' @title `rational` arithmetic.
+##'
+##' @param e1 A `rational`
+##' @param e2 A `rational`
+##' @return A `rational`
+setMethod("-", signature(e1="rational",
+                         e2="rational"),
+          function(e1, e2) {
+            lcm <- C_lcm(e1@denominator, e2@denominator)
+            e1_mul <- lcm / e1@denominator
+            e2_mul <- lcm / e2@denominator
+            new_nominator <- e1@nominator * e1_mul - e2@nominator * e2_mul
+            return(rational(a=new_nominator,
+                            b=lcm))
+          })
+
+# multiplication method
+
+##' @title `rational` arithmetic.
+##'
+##' @param e1 A `rational`
+##' @param e2 A `rational`
+##' @return A `rational`
+setMethod("*", signature(e1="rational",
+                         e2="rational"),
+          function(e1, e2) {
+            return(rational(a=e1@nominator * e2@nominator,
+                            b=e1@denominator * e2@denominator))
+          })
+
+# division method
+
+##' @title `rational` arithmetic.
+##'
+##' @param e1 A `rational`
+##' @param e2 A `rational`
+##' @return A `rational`
+setMethod("/", signature(e1="rational",
+                         e2="rational"),
+          function(e1, e2) {
+            return(rational(a=e1@nominator * e2@denominator,
+                            b=e1@denominator * e2@nominator))
+          })
+```
+
+## b.
+
+```{r error = TRUE}
+# create three objects:
+r1 <- rational(a=24, b=6)
+r2 <- rational(a=7, b=230)
+r3 <- rational(a=0, b=4)
+
+
+
+r1
+
+r3
+
+r1 + r2
+
+r1 - r2
+
+r1 * r2
+
+r1 / r2
+
+r1 + r3
+
+r1 * r3
+
+r2 / r3
+
+quotient(r1)
+
+quotient(r2)
+
+quotient(r2, digits = 3)
+
+quotient(r2, digits = 3.14)
+
+quotient(r2, digits = "avocado")
+
+q2 <- quotient(r2, digits = 3)
+
+q2
+
+quotient(r3)
+
+simplify(r1)
+
+simplify(r2)
+
+simplify(r3)
+
+```
+
+## c.
+
+```{r error=TRUE}
+r_error <- rational(a=4, b=0)
+
+r_error <- rational(a='1', b=1)
+
+r_error <- rational(b=1)
+```
+
+# Problem 2
+
+Pre-processing data.
+
+```{r}
+library(plotly)
+
+art <- read.csv("df_for_ml_improved_new_market.csv")
+art$Genre___Others[art$Genre___Painting == 1] <- 0
+art$genre <- "Photography"
+art$genre[art$Genre___Print == 1] <- "Print"
+art$genre[art$Genre___Sculpture == 1] <- "Sculpture"
+art$genre[art$Genre___Painting == 1] <- "Painting"
+art$genre[art$Genre___Others == 1] <- "Other"
+```
+
+## a.
+
+```{r}
+yeargenre <- with(art, table(year, genre))
+ygperc <- yeargenre / apply(yeargenre, 1, sum)
+ygperc <- ygperc[, c("Painting", "Sculpture", "Photography", "Print", "Other")]
+
+ygperc_df <- as.data.frame(ygperc)
+
+# Create the plot
+
+fig <- plot_ly(ygperc_df, 
+               x=~Freq, 
+               y=~year, 
+               color=~genre,
+               type="bar",
+               orientation = "h",
+               textposition="auto") %>%
+  layout(
+    yaxis=list(title="Year"),
+    xaxis=list(title="Percentages"),
+    title="Bar Plot Showing Percentages",
+    barmode="stack"
+  )
+
+fig
+
+``` 
+
+We can draw the conclusion that, over time, painting sales were replaced with photo/print sales as the digital age ramped up.
+
+## b.
+
+```{r}
+
+# for part a
+
+##' @title Subset a vector to values above some percentile
+##' @param vec A vector of values
+##' @param percentile A percentile to identify
+select_top_values <- function(vec, percentile) {
+  val <- quantile(vec, percentile)
+  return(vec[vec > val])
+}
+
+save <- list()
+for (y in unique(art$year)) {
+  prices <- art[art$year == y, "price_usd"]
+  save[[as.character(y)]] <-
+    data.frame(year = y,
+               price_usd = select_top_values(prices, .95))
+}
+
+# We've got a list, use `do.call` to combine them all together
+arttop <- do.call(rbind, save)
+
+artmedian_a <- aggregate(art$price_usd, by=list(art$year),
+                       FUN=median, na.rm=TRUE)
+
+names(artmedian_a) <- c("year", "price_usd")
+
+pl_plot <- plot_ly(arttop,
+                    x=~year,
+                    y=~price_usd,
+                    type="box",
+                    name="Top 5%",
+                    visible=TRUE)
+
+pl_plot <- pl_plot %>%
+  add_lines(
+  x=artmedian_a$year, 
+  y=artmedian_a$price_usd, 
+  mode="lines", 
+  type="scatter", 
+  name="Median Price",
+  visible=TRUE
+)
+
+pl_plot <- pl_plot %>%
+  layout(
+  title="Changes in Top 5% of prices",
+  xaxis=list(title = "Year"),
+  yaxis=list(title = "Price (USD)")
+)
+
+# for part c
+
+artmedian_c <- aggregate(art$price_usd, by=list(art$year, art$genre),
+                   FUN=median, na.rm=TRUE)
+
+names(artmedian_c) <- c("year", "genre", "price_usd")
+
+artmedian_c <- artmedian_c[order(artmedian_c$year), ]
+
+art975 <- aggregate(art$price_usd, by = list(art$year, art$genre),
+                   FUN=quantile, .975, na.rm=TRUE)
+
+names(art975) <- c("year", "genre", "price_usd")
+
+art975 <- art975[order(art975$year), ]
+
+genres <- unique(artmedian_c$genre)
+
+color_set <- c("red", "blue", "green", "yellow", "black")
+
+for (i in seq_along(genres)) {
+  
+  pl_plot <- pl_plot %>%
+    add_lines(data=artmedian_c[artmedian_c$genre == genres[i],],
+            x=~year,
+            y=~price_usd,
+            color=color_set[i],
+            name=paste("97.5% Psercentile", genres[i]),
+            visible=FALSE) %>%
+    add_lines(data=art975[art975$genre == genres[i],],
+            x=~year,
+            y=~price_usd,
+            color=color_set[i],
+            name=paste("Median", genres[i]),
+            line=list(dash="dash"),
+            visible=FALSE)
+    
+}
+
+list_one <- list(TRUE, TRUE,
+                 FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
+
+list_two <- as.list(list_one == FALSE)
+
+pl_plot <- pl_plot %>% layout(updatemenus=list(
+  list(
+    y = 1,
+    buttons = list(
+      list(method="update",
+           args=list(list(visible=list_one),
+                       list(yaxis=list(title="Price (USD)"),
+                            xaxis=list(title="Year"),
+                            title="Changes in Top 5% of Prices")),
+           label="Changes in Top 5% of Prices"),
+
+      list(method="update",
+           args=list(list(visible=list_two),
+                       list(yaxis=list(title="Price (USD)"),
+                            xaxis=list(title=""),
+                            title="Changes in Price by Genre")),
+           label="Changes in Price by Genre")
+      )
+  )
+))
+
+pl_plot
+```
+
+For question i, we see that while the median price does not change drastically, we see a large increase in the price for the most expensive sales starting around 2000 until around 2006, at which point it stabilizes.
+
+For question ii, photography prices increased the most, both in terms of median and large values. Painting/sculpture/print all saw similar but lesser increases. Other isn’t really interesting at all.
+
+# Problem 3
+
+## a.
+
+```{r}
+library(nycflights13)
+library(data.table)
+
+flights_dt <- data.table(flights)
+airports_dt <- data.table(airports)
+
+# departure
+flights_dt[, .(
+  mean_delay=mean(dep_delay, na.rm=TRUE),
+  med_delay=median(dep_delay, na.rm=TRUE),
+  numflights=.N
+), by=origin] %>%
+  .[numflights >= 10] %>% 
+  .[, faa:=origin] %>% 
+  merge(., airports_dt, by="faa", all.x=TRUE) %>% 
+  .[, .(name, mean_delay, med_delay)] %>% 
+  .[order(-mean_delay)]
+```
+
+```{r}
+# arrival
+flights_dt[, .(
+  mean_delay=mean(arr_delay, na.rm=TRUE),
+  med_delay=median(arr_delay, na.rm=TRUE),
+  numflights=.N
+), by=dest] %>%
+  .[numflights >= 10] %>% 
+  .[, faa:=dest] %>% 
+  merge(., airports_dt, by="faa", all.x=TRUE) %>% 
+  .[, .(name, mean_delay, med_delay)] %>% 
+  .[order(-mean_delay)]
+```
+
+## b.
+
+```{r}
+planes_dt <- data.table(planes)
+
+flights_dt %>% 
+  merge(., planes, by="tailnum", all.x=TRUE) %>%
+    .[, time:=air_time / 60] %>%
+    .[, mph:=distance / time] %>%
+    .[, .(
+        avgmph=mean(mph, na.rm = TRUE),
+        nflights=.N
+    ), by=model] %>%
+    .[order(-avgmph)] %>%
+    .[1]
+
+```
