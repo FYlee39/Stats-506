@@ -7,7 +7,7 @@ format:
 editor: visual
 ---
 
-# Line to GitHub
+# Link to GitHub
 
 The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS5>.
 
