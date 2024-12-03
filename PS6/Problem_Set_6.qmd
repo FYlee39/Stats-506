@@ -1,0 +1,237 @@
+---
+title: "Problem Set 6"
+author: "Yifan Li"
+format:
+  html:
+    self-contained: true
+editor: visual
+---
+
+# Link to GitHub
+
+The link to my GitHub repository is <https://github.com/FYlee39/Stats-506/tree/main/PS6>.
+
+# Problem Set 6
+
+## Stratified Bootstrapping
+
+```{r}
+library(DBI)
+library(tidyverse)
+
+lahman <- dbConnect(RSQLite::SQLite(), "lahman_1871-2022.sqlite")
+
+dbListFields(lahman, "Fielding")
+
+fielding <- dbGetQuery(lahman, "select PO, A, InnOuts, teamID
+                       from Fielding")
+
+n_bootstrap <- 1000
+
+fielding <- fielding %>%
+  filter(!is.na(InnOuts), InnOuts > 0) %>%
+  mutate(RF = 3 * (PO + A) / InnOuts)
+
+#' Function to perform one bootstrap sample
+#'
+#' @param fielding the data frame
+#' @return The sample results
+bootstrap_sample_function <- function(fielding) {
+  fielding %>%
+    group_by(teamID) %>%
+    sample_frac(size=1, replace=TRUE) %>%
+    summarize(RF_sd=sd(RF)) %>%
+    pull(RF_sd)
+}
+```
+
+### a.
+
+#### 1. Without any parallel processing
+
+```{r}
+rf_1 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF=mean(RF, na.rm=TRUE))
+
+bootstrap_results_1 <- replicate(n_bootstrap, {
+  bootstrap_sample_function(fielding)
+}, simplify="matrix")
+
+bootstrap_sd_1 <- apply(bootstrap_results_1, 1, mean)
+
+rf_1 <- rf_1 %>%
+  mutate(standard_errors=bootstrap_sd_1) %>%
+  arrange(desc(average_RF))
+```
+
+#### 2. Using parallel processing with the parallel package
+
+```{r}
+library(parallel)
+
+rf_2 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF=mean(RF, na.rm=TRUE))
+
+cl <- makeCluster(4)
+
+clusterExport(cl, c("fielding", "bootstrap_sample_function", "sample_frac"))
+
+clusterEvalQ(cl, library(tidyverse))
+
+bootstrap_results_2 <- parLapply(cl, seq_len(n_bootstrap), function(i) {
+  bootstrap_sample_function(fielding)
+})
+
+bootstrap_sd_2 <- parApply(cl, as.data.frame(bootstrap_results_2), 1, mean)
+
+rf_2 <- rf_2 %>%
+  mutate(standard_errors=bootstrap_sd_2) %>%
+  arrange(desc(average_RF))
+
+stopCluster(cl)
+```
+
+#### 3. Using futures with the future package
+
+```{r}
+library(future)
+library(future.apply)
+
+plan(multisession)
+
+rf_3 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF = mean(RF, na.rm = TRUE))
+
+bootstrap_samples <- future_lapply(1:n_bootstrap, function(i) {
+  bootstrap_sample_function(fielding)
+}, future.seed=TRUE)
+
+savedf <- do.call(rbind, bootstrap_samples)
+
+bootstrap_sd_3 <- apply(savedf, 2, mean)
+
+rf_3 <- rf_3 %>%
+  mutate(standard_errors=bootstrap_sd_3) %>%
+  arrange(desc(average_RF))
+
+plan(sequential)
+```
+
+### b.
+
+#### 1. Without any parallel processing
+
+```{r}
+head(rf_1, 10)
+```
+
+#### 2. Using parallel processing with the parallel package
+
+```{r}
+head(rf_2, 10)
+```
+
+#### 3. Using futures with the future package
+
+```{r}
+head(rf_3, 10)
+```
+
+### c.
+
+For the time usage:
+
+#### 1. Without any parallel processing
+
+```{r}
+sequential_time <- system.time({
+  
+rf_1 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF=mean(RF, na.rm=TRUE))
+
+bootstrap_results_1 <- replicate(n_bootstrap, {
+  bootstrap_sample_function(fielding)
+}, simplify="matrix")
+
+bootstrap_sd_1 <- apply(bootstrap_results_1, 1, mean)
+
+rf_1 <- rf_1 %>%
+  mutate(standard_errors=bootstrap_sd_1) %>%
+  arrange(desc(average_RF))
+
+})
+```
+
+#### 2. Using parallel processing with the parallel package
+
+```{r}
+parallel_time <- system.time({
+  
+library(parallel)
+
+rf_2 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF=mean(RF, na.rm=TRUE))
+
+cl <- makeCluster(4)
+
+clusterExport(cl, c("fielding", "bootstrap_sample_function", "sample_frac"))
+
+clusterEvalQ(cl, library(tidyverse))
+
+bootstrap_results_2 <- parLapply(cl, seq_len(n_bootstrap), function(i) {
+  bootstrap_sample_function(fielding)
+})
+
+bootstrap_sd_2 <- parApply(cl, as.data.frame(bootstrap_results_2), 1, mean)
+
+rf_2 <- rf_2 %>%
+  mutate(standard_errors=bootstrap_sd_2) %>%
+  arrange(desc(average_RF))
+
+stopCluster(cl)
+
+})
+```
+
+#### 3. Using futures with the future package
+
+```{r}
+future_time <- system.time({
+  
+library(future)
+library(future.apply)
+
+plan(multisession)
+
+rf_3 <- fielding %>%
+  group_by(teamID) %>%
+  summarise(average_RF = mean(RF, na.rm = TRUE))
+
+bootstrap_samples <- future_lapply(1:n_bootstrap, function(i) {
+  bootstrap_sample_function(fielding)
+}, future.seed=TRUE)
+
+savedf <- do.call(rbind, bootstrap_samples)
+
+bootstrap_sd_3 <- apply(savedf, 2, mean)
+
+rf_3 <- rf_3 %>%
+  mutate(standard_errors=bootstrap_sd_3) %>%
+  arrange(desc(average_RF))
+
+plan(sequential)
+})
+```
+
+```{r}
+sequential_time
+parallel_time
+future_time
+```
+
+Judging from the time usage, the way using parallel and future is much faster than the sequential way.
