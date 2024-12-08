@@ -101,3 +101,7 @@ for (n in 1: length(sample_size)){
 
 covarage_rate_2 <- normal_covarage_2 / robust_covarage_2
 covarage_rate_3 <- normal_covarage_3 / robust_covarage_3
+
+save(covarage_rate_2, covarage_rate_2, file="exp_3/covarage_rate_2.RData")
+
+save(covarage_rate_3, covarage_rate_3, file="exp_3/covarage_rate_3.RData")
